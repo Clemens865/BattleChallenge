@@ -1,0 +1,22 @@
+id: "challenge-210-adversarial-input"
+name: "Adversarial Input Resilience — resolve contradictory project requirements"
+type: multi-step
+tags: [adversarial, security, python, framework-test, contradiction]
+difficulty:
+  tier: T3
+  passing_threshold: 100
+  excellence_threshold: 100
+  auto_scale: false
+status: active
+timeout_ms: 1800000
+requirements_path: requirements.md
+verify_path: verify
+reference_path: reference
+scoring: binary
+category: adversarial
+languages: [python]
+min_files: 3
+min_lines: 15
+two_pass: false
+version: 2
+created_at: "2026-03-26"

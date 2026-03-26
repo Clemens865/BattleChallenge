@@ -60,6 +60,22 @@ export type TaskType = 'prd' | 'coding' | 'multi-step' | 'tool-use' | 'rag' | 'm
 export type DifficultyTier = 'T1' | 'T2' | 'T3' | 'T4';
 export type TaskStatus = 'active' | 'secret' | 'retired';
 
+/**
+ * Challenge categories that test FRAMEWORK capabilities, not model capabilities.
+ * Each category targets a specific orchestration skill where frameworks diverge.
+ */
+export type ChallengeCategory =
+  | 'recovery'           // Cat 1: Recovery from cascading failure
+  | 'navigation'         // Cat 2: Large codebase navigation
+  | 'sequential'         // Cat 3: Multi-step sequential dependency
+  | 'ambiguity'          // Cat 4: Specification ambiguity resolution
+  | 'refactoring'        // Cat 5: Cross-file refactoring consistency
+  | 'environment'        // Cat 6: Environment setup & dependency resolution
+  | 'resilience'         // Cat 7: Long-running workflow resilience
+  | 'tdd'                // Cat 8: Test-driven development loop
+  | 'synthesis'          // Cat 9: Multi-source information synthesis
+  | 'adversarial';       // Cat 10: Adversarial input resilience
+
 export interface TaskDefinition {
   id: string;
   name: string;
@@ -75,6 +91,9 @@ export interface TaskDefinition {
   requirementsPath: string;
   verifyPath: string;
   referencePath?: string;
+
+  // Challenge category — what framework capability this tests
+  category?: ChallengeCategory;
 
   // Hard task properties (principles from benchmark research)
   scoring: 'binary' | 'graduated';        // binary = all-or-nothing (principle #1)

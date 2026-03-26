@@ -17,6 +17,7 @@ export const runCommand = new Command('run')
   .requiredOption('--framework <path>', 'Path to adapter directory or adapter.yaml')
   .option('--task <id>', 'Run a single task by ID')
   .option('--tags <tags>', 'Filter tasks by tags (comma-separated)')
+  .option('--category <cat>', 'Filter by challenge category (recovery, navigation, tdd, etc.)')
   .option('--tasks-dir <path>', 'Path to tasks directory', './tasks')
   .option('--runs <n>', 'Number of runs per task', '5')
   .option('--timeout <ms>', 'Override timeout per task (ms)')
@@ -37,6 +38,10 @@ export const runCommand = new Command('run')
           console.error(chalk.red(`Task not found: ${opts.task}`));
           process.exit(1);
         }
+      }
+
+      if (opts.category) {
+        tasks = tasks.filter(t => t.category === opts.category);
       }
 
       if (opts.tags) {

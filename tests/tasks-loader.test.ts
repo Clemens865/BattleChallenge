@@ -31,7 +31,7 @@ describe('loadAllTasks', () => {
   it('loads all tasks from directory', () => {
     const tasks = loadAllTasks(TASKS_DIR);
     expect(tasks.length).toBeGreaterThanOrEqual(2);
-    expect(tasks[0].id).toBe('task-001-validate-email');
+    expect(tasks.some(t => t.id === 'task-001-validate-email')).toBe(true);
   });
 
   it('returns empty array for nonexistent directory', () => {

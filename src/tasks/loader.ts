@@ -80,6 +80,7 @@ function validateTask(raw: Record<string, unknown>, taskDir: string): TaskDefini
     requirementsPath,
     verifyPath,
     referencePath: typeof raw.reference_path === 'string' ? raw.reference_path : undefined,
+    category: typeof raw.category === 'string' ? raw.category as any : undefined,
     scoring: raw.scoring === 'binary' ? 'binary' : 'graduated',
     languages: Array.isArray(raw.languages) ? raw.languages.map(String) : ['python'],
     minFiles: typeof raw.min_files === 'number' ? raw.min_files : 1,

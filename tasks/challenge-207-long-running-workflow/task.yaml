@@ -1,0 +1,22 @@
+id: "challenge-207-long-running-workflow"
+name: "Long-Running Workflow Resilience — build a complete REST API from PRD"
+type: multi-step
+tags: [resilience, api, python, framework-test, sustained-coherence]
+difficulty:
+  tier: T3
+  passing_threshold: 100
+  excellence_threshold: 100
+  auto_scale: false
+status: active
+timeout_ms: 1800000
+requirements_path: requirements.md
+verify_path: verify
+reference_path: reference
+scoring: binary
+category: resilience
+languages: [python]
+min_files: 8
+min_lines: 40
+two_pass: true
+version: 2
+created_at: "2026-03-26"

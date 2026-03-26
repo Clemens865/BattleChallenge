@@ -1,0 +1,43 @@
+#engineering-api — March 5, 2026
+
+@sarah.chen (10:14 AM):
+Heads up team — the v2 migration is live. I've updated the docs but wanted to flag a few things that aren't super obvious from the changelog.
+
+@mike.rodriguez (10:17 AM):
+Thanks Sarah. What should we watch out for?
+
+@sarah.chen (10:19 AM):
+First big one: pagination is completely different. v1 used offset-based pagination (offset=0&limit=20). v2 uses cursor-based pagination. The response includes a `next_cursor` field — you pass that as the `cursor` query parameter to get the next page. Don't try to calculate offsets anymore.
+
+@james.kim (10:22 AM):
+Does the cursor come back as null when there are no more pages?
+
+@sarah.chen (10:23 AM):
+The `next_cursor` field will be null/absent when there are no more results. There's also a `has_more` boolean. Use either one.
+
+@mike.rodriguez (10:25 AM):
+What about rate limiting? Our client reads X-RateLimit from the response headers.
+
+@sarah.chen (10:27 AM):
+Good catch — that header changed too. The new header is `X-Rate-Limit-Remaining` (with dashes between each word). Make sure to update that in your client code or you'll think you have unlimited requests.
+
+@james.kim (10:30 AM):
+Also I noticed the error format changed. In v1 errors were just a string in XML. In v2, errors are JSON objects with `error.code` and `error.message` fields. Our error handling code probably needs to handle that.
+
+@sarah.chen (10:32 AM):
+Right. And HTTP status codes are the same — 401 for bad auth, 404 for not found, 429 for rate limited. But the body is structured JSON now.
+
+@mike.rodriguez (10:35 AM):
+One more thing — is the search endpoint new? I don't see it in our v1 client.
+
+@sarah.chen (10:36 AM):
+Yes, POST /v2/search is brand new. It takes a JSON body with `query` (string) and optional `filters` object. Super useful for the dashboard team. Make sure your client class has a method for it.
+
+@james.kim (10:40 AM):
+I'll update our Python client today. Just to confirm: Bearer token auth, JSON everything, cursor pagination, new rate limit header, and add search endpoint. Anything else?
+
+@sarah.chen (10:41 AM):
+That covers it. Oh wait — also make sure error handling raises proper exceptions for non-200 responses. The v1 client just silently returned None on errors which caused some fun debugging sessions last month.
+
+@mike.rodriguez (10:43 AM):
+lol "fun". Thanks Sarah!

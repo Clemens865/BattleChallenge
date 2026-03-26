@@ -1,0 +1,22 @@
+id: "challenge-206-environment-setup"
+name: "Environment Setup & Dependency Resolution — fix a broken project"
+type: multi-step
+tags: [environment, configuration, typescript, node, framework-test]
+difficulty:
+  tier: T3
+  passing_threshold: 100
+  excellence_threshold: 100
+  auto_scale: false
+status: active
+timeout_ms: 1800000
+requirements_path: requirements.md
+verify_path: verify
+reference_path: reference
+scoring: binary
+category: environment
+languages: [typescript]
+min_files: 2
+min_lines: 5
+two_pass: false
+version: 2
+created_at: "2026-03-26"

@@ -3,6 +3,7 @@
  */
 
 import { Command } from 'commander';
+import fs from 'node:fs';
 import path from 'node:path';
 import chalk from 'chalk';
 import { loadAdapter } from '../../adapters/loader.js';
@@ -21,7 +22,9 @@ export const runCommand = new Command('run')
   .option('--timeout <ms>', 'Override timeout per task (ms)')
   .action(async (opts) => {
     try {
-      const adapter = loadAdapter(opts.framework);
+      const frameworkPath = path.resolve(opts.framework);
+      const adapter = loadAdapter(frameworkPath);
+      const adapterDir = fs.statSync(frameworkPath).isDirectory() ? frameworkPath : path.dirname(frameworkPath);
       console.log(chalk.bold(`\nBattleChallenge — Running ${adapter.name} v${adapter.version}`));
       console.log(chalk.dim(`Tier: ${adapter.tier} | Tags: ${adapter.tags.join(', ') || 'none'}\n`));
 
@@ -54,6 +57,12 @@ export const runCommand = new Command('run')
       const db = new BattleChallengeDB();
       const numRuns = parseInt(opts.runs);
 
+      // Register framework and tasks in DB before saving runs
+      db.saveFramework(adapter);
+      for (const task of tasks) {
+        db.saveTask(task);
+      }
+
       for (const task of tasks) {
         console.log(chalk.blue(`Task: ${task.id} (${task.type}, ${task.difficulty})`));
 
@@ -62,7 +71,7 @@ export const runCommand = new Command('run')
           const taskDir = path.join(tasksDir, task.id);
 
           try {
-            const result = await runner.executeTask(adapter, task, taskDir, run);
+            const result = await runner.executeTask(adapter, task, taskDir, run, adapterDir);
             db.saveRun(result);
 
             const status = result.metrics.correctness.score >= task.passingThreshold

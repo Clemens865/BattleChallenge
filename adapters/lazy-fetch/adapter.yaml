@@ -1,0 +1,13 @@
+name: lazy-fetch
+version: "1.0.0"
+tier: shell
+tags:
+  - coding-agent
+  - cli
+  - orchestration
+  - model-agnostic
+  - multi-agent
+setup: |
+  which lazy || echo "lazy-fetch not found"
+run: ./adapter.sh
+model_default: claude-opus-4-6

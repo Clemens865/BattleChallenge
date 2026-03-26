@@ -80,6 +80,13 @@ function validateTask(raw: Record<string, unknown>, taskDir: string): TaskDefini
     requirementsPath,
     verifyPath,
     referencePath: typeof raw.reference_path === 'string' ? raw.reference_path : undefined,
+    scoring: raw.scoring === 'binary' ? 'binary' : 'graduated',
+    languages: Array.isArray(raw.languages) ? raw.languages.map(String) : ['python'],
+    minFiles: typeof raw.min_files === 'number' ? raw.min_files : 1,
+    minLines: typeof raw.min_lines === 'number' ? raw.min_lines : 0,
+    twoPass: raw.two_pass === true,
+    createdAt: typeof raw.created_at === 'string' ? raw.created_at : undefined,
+    version: typeof raw.version === 'number' ? raw.version : 1,
   };
 }
 
@@ -137,6 +144,13 @@ timeout_ms: ${getDefaultTimeout(tier)}
 requirements_path: requirements.md
 verify_path: verify
 reference_path: reference/solution
+scoring: binary
+languages: [python]
+min_files: 1
+min_lines: 10
+two_pass: false
+version: 2
+created_at: "${new Date().toISOString().split('T')[0]}"
 `;
   fs.writeFileSync(path.join(dir, 'task.yaml'), yaml);
 

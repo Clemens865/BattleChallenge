@@ -30,6 +30,7 @@ export class Runner {
     task: TaskDefinition,
     taskDir: string,
     runNumber: number,
+    adapterDir?: string,
   ): Promise<RunResult> {
     const runId = `bc-${adapter.name}-${task.id}-${runNumber}-${Date.now()}`;
     const outputDir = path.join(taskDir, '.output', runId);
@@ -44,13 +45,45 @@ export class Runner {
     let stderr = '';
 
     if (adapter.tier === 'shell') {
-      const result = this.executeShellAdapter(adapter, taskFile, outputDir, task.timeoutMs);
+      const result = this.executeShellAdapter(adapter, taskFile, outputDir, task.timeoutMs, adapterDir);
       exitCode = result.exitCode;
       stdout = result.stdout;
       stderr = result.stderr;
     } else {
-      // Structured and API tiers will be implemented in later phases
       throw new Error(`Adapter tier '${adapter.tier}' not yet implemented`);
+    }
+
+    // Two-pass scoring (principle #7): if first attempt fails, show test output
+    // and let the framework try again. This tests both generation AND debugging.
+    if (task.twoPass && exitCode === 0) {
+      const verifyDir = path.join(taskDir, task.verifyPath);
+      if (fs.existsSync(verifyDir)) {
+        const firstPass = this.runPytest(verifyDir, outputDir, true);
+        if (firstPass.testsFailed > 0) {
+          // Write test feedback for the framework to read
+          const feedbackFile = path.join(outputDir, '.test-feedback.txt');
+          fs.writeFileSync(feedbackFile, [
+            '# TEST FEEDBACK — Second attempt',
+            `# ${firstPass.testsPassed}/${firstPass.testsTotal} tests passed. Fix the failures below:`,
+            '',
+            firstPass.output,
+          ].join('\n'));
+
+          // Run adapter again with FEEDBACK_FILE env var
+          const env = { ...process.env, TASK_FILE: taskFile, OUTPUT_DIR: outputDir, FEEDBACK_FILE: feedbackFile };
+          try {
+            execSync(adapter.run, {
+              env,
+              cwd: adapterDir || process.cwd(),
+              timeout: task.timeoutMs,
+              stdio: 'pipe',
+              maxBuffer: 50 * 1024 * 1024,
+            });
+          } catch {
+            // Second pass failed — score based on whatever state we have
+          }
+        }
+      }
     }
 
     const endMs = performance.now();
@@ -88,6 +121,7 @@ export class Runner {
     taskFile: string,
     outputDir: string,
     timeoutMs: number,
+    adapterDir?: string,
   ): { exitCode: number; stdout: string; stderr: string } {
     const env = {
       ...process.env,
@@ -95,13 +129,16 @@ export class Runner {
       OUTPUT_DIR: outputDir,
     };
 
+    const cwd = adapterDir || process.cwd();
+
     try {
       if (adapter.setup) {
-        execSync(adapter.setup, { env, timeout: 60_000, stdio: 'pipe' });
+        execSync(adapter.setup, { env, cwd, timeout: 60_000, stdio: 'pipe' });
       }
 
       const output = execSync(adapter.run, {
         env,
+        cwd,
         timeout: timeoutMs || this.config.timeoutMs,
         stdio: 'pipe',
         maxBuffer: 50 * 1024 * 1024,
@@ -122,6 +159,40 @@ export class Runner {
     }
   }
 
+  private runPytest(
+    verifyDir: string,
+    outputDir: string,
+    verbose = false,
+  ): { testsTotal: number; testsPassed: number; testsFailed: number; output: string } {
+    let testsTotal = 0;
+    let testsPassed = 0;
+    let testsFailed = 0;
+    let output = '';
+
+    try {
+      const tbFlag = verbose ? '--tb=long' : '--tb=short';
+      const result = execSync(
+        `cd "${outputDir}" && python3 -m pytest "${verifyDir}" ${tbFlag} -q 2>&1 || true`,
+        { timeout: 120_000, stdio: 'pipe', env: { ...process.env, OUTPUT_DIR: outputDir } },
+      );
+      output = result.toString();
+
+      // Parse "X passed, Y failed" or just "X passed"
+      const failMatch = output.match(/(\d+) failed/);
+      const passMatch = output.match(/(\d+) passed/);
+      const errorMatch = output.match(/(\d+) error/);
+
+      testsPassed = passMatch ? parseInt(passMatch[1], 10) : 0;
+      testsFailed = (failMatch ? parseInt(failMatch[1], 10) : 0) +
+                    (errorMatch ? parseInt(errorMatch[1], 10) : 0);
+      testsTotal = testsPassed + testsFailed;
+    } catch {
+      // Test execution failed entirely
+    }
+
+    return { testsTotal, testsPassed, testsFailed, output };
+  }
+
   private async scoreRun(
     task: TaskDefinition,
     taskDir: string,
@@ -134,29 +205,19 @@ export class Runner {
     let testsPassed = 0;
 
     if (fs.existsSync(verifyDir)) {
-      try {
-        const result = execSync(
-          `cd "${outputDir}" && python3 -m pytest "${verifyDir}" --tb=short -q 2>&1 || true`,
-          { timeout: 120_000, stdio: 'pipe' },
-        );
-        const output = result.toString();
-        const match = output.match(/(\d+) passed(?:.*?)(\d+)? failed/);
-        if (match) {
-          testsPassed = parseInt(match[1], 10);
-          testsTotal = testsPassed + (match[2] ? parseInt(match[2], 10) : 0);
-        } else {
-          const passedMatch = output.match(/(\d+) passed/);
-          if (passedMatch) {
-            testsPassed = parseInt(passedMatch[1], 10);
-            testsTotal = testsPassed;
-          }
-        }
-      } catch {
-        // Test execution failed
-      }
+      const result = this.runPytest(verifyDir, outputDir);
+      testsTotal = result.testsTotal;
+      testsPassed = result.testsPassed;
     }
 
-    const score = testsTotal > 0 ? Math.round((testsPassed / testsTotal) * 100) : 0;
+    // Binary scoring (principle #1): ALL tests must pass or score is 0
+    // Graduated scoring: proportional to tests passed
+    let score: number;
+    if (task.scoring === 'binary') {
+      score = (testsTotal > 0 && testsPassed === testsTotal) ? 100 : 0;
+    } else {
+      score = testsTotal > 0 ? Math.round((testsPassed / testsTotal) * 100) : 0;
+    }
 
     return {
       correctness: {

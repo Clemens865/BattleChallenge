@@ -75,6 +75,15 @@ export interface TaskDefinition {
   requirementsPath: string;
   verifyPath: string;
   referencePath?: string;
+
+  // Hard task properties (principles from benchmark research)
+  scoring: 'binary' | 'graduated';        // binary = all-or-nothing (principle #1)
+  languages: string[];                      // multi-language requirement (principle #5)
+  minFiles: number;                         // minimum output files required (principle #6)
+  minLines: number;                         // minimum total lines required (principle #6)
+  twoPass: boolean;                         // test feedback → second attempt (principle #7)
+  createdAt?: string;                       // for training cutoff filtering (principle #4)
+  version: number;                          // benchmark versioning (principle #9)
 }
 
 export interface TaskContext {

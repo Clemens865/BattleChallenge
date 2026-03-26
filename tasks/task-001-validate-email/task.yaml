@@ -1,0 +1,14 @@
+id: "task-001-validate-email"
+name: "Validate email addresses"
+type: coding
+tags: [coding, validation, T1]
+difficulty:
+  tier: T1
+  passing_threshold: 60
+  excellence_threshold: 95
+  auto_scale: true
+status: active
+timeout_ms: 120000
+requirements_path: requirements.md
+verify_path: verify
+reference_path: reference/solution

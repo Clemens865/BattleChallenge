@@ -1,0 +1,14 @@
+name: langgraph
+version: "0.2.0"
+tier: shell
+tags:
+  - orchestration
+  - library
+  - python
+  - model-agnostic
+  - stateful
+  - multi-agent
+setup: |
+  pip install langgraph langchain-anthropic
+run: ./adapter.sh
+model_default: claude-opus-4-6

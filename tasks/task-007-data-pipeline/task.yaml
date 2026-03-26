@@ -1,0 +1,14 @@
+id: "task-007-data-pipeline"
+name: "Multi-step data transformation pipeline"
+type: multi-step
+tags: [multi-step, data, transformation, T3]
+difficulty:
+  tier: T3
+  passing_threshold: 60
+  excellence_threshold: 95
+  auto_scale: true
+status: active
+timeout_ms: 300000
+requirements_path: requirements.md
+verify_path: verify
+reference_path: reference/solution

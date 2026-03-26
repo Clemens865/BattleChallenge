@@ -1,0 +1,12 @@
+name: aider
+version: "0.52.0"
+tier: shell
+tags:
+  - coding-agent
+  - cli
+  - model-agnostic
+  - python
+setup: |
+  pip install aider-chat
+run: ./adapter.sh
+model_default: claude-opus-4-6

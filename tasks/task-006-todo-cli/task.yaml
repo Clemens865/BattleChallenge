@@ -1,0 +1,14 @@
+id: "task-006-todo-cli"
+name: "Todo list CLI application"
+type: coding
+tags: [coding, cli, persistence, T2]
+difficulty:
+  tier: T2
+  passing_threshold: 60
+  excellence_threshold: 95
+  auto_scale: true
+status: active
+timeout_ms: 180000
+requirements_path: requirements.md
+verify_path: verify
+reference_path: reference/solution
